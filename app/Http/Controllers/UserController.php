@@ -20,7 +20,7 @@ class UserController extends Controller
     {
         try {
 
-            if (! $users = JWTAuth::parseToken()->authenticate()) {
+            if (! $user = JWTAuth::parseToken()->authenticate()) {
                 return response()->json(['status'=>'user_not_found'], 404);
             }
 
@@ -40,7 +40,7 @@ class UserController extends Controller
 
         $status = "Token is Valid";
 
-        return response()->json(compact(['users', 'status']));
+        return response()->json(compact(['user', 'status']));
     }
 
     public function register(Request $request)
@@ -58,7 +58,7 @@ class UserController extends Controller
             return response()->json(['status' => $validator->errors()->toJson()], 400);
         }
 
-        $users = Users::create([
+        $user = Users::create([
             'name' => $request->get('name'),
             'email' => $request->get('email'),
             'password' => Hash::make($request->get('password')),
@@ -67,11 +67,11 @@ class UserController extends Controller
             'phone_number' => $request->get('phone_number'),
             'role'=>$request->get('role'),
         ]);
-
-        $token = JWTAuth::fromUser($users);
+        
+        $token = JWTAuth::fromUser($user);
         $status = "register is success";
 
-        return response()->json(compact('users','token', 'status'),201);
+        return response()->json(compact('user','token', 'status'),201);
     }
 
     public function login(Request $request)
@@ -85,16 +85,16 @@ class UserController extends Controller
         } catch (JWTException $e) {
             return response()->json(['status' => 'could_not_create_token'], 500);
         }
-
+        $user = auth()->user();
         $status = "Login is Success";
-        return response()->json(compact('token', 'status'));
+        return response()->json(compact('token', 'user', 'status'));
     }
 
     public function logout() {
 
         try {
 
-            if (! $users = JWTAuth::parseToken()->authenticate()) {
+            if (! $user = JWTAuth::parseToken()->authenticate()) {
                 return response()->json(['status'=>'user_not_found'], 404);
             }
 
@@ -123,7 +123,7 @@ class UserController extends Controller
 
         try {
 
-            if (! $users = JWTAuth::parseToken()->authenticate()) {
+            if (! $user = JWTAuth::parseToken()->authenticate()) {
                 return response()->json(['status'=>'user_not_found'], 404);
             }
 
@@ -141,7 +141,7 @@ class UserController extends Controller
 
         }
 
-        $users = JWTAuth::parseToken()->authenticate();
+        $user = JWTAuth::parseToken()->authenticate();
 
 
         if($request->hasFile('image')) {
@@ -158,7 +158,7 @@ class UserController extends Controller
             $file = $request->file('image');
             $filename = time() . '.' . $file->getClientOriginalExtension();
 
-            Storage::delete('users/' . $users->image);
+            Storage::delete('users/' . $user->image);
             $file->storeAs('users/', $filename);
 
         }else{
@@ -166,7 +166,7 @@ class UserController extends Controller
         }
 
         if($request->get('name')==NULL){
-            $name = $users->name;
+            $name = $user->name;
         } else{
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255'
@@ -179,7 +179,7 @@ class UserController extends Controller
         }
 
         if($request->get('email')==NULL){
-            $email = $users->email;
+            $email = $user->email;
         } else{
             $validator = Validator::make($request->all(), [
                 'email' => 'required|string|email|max:255|unique:users'
@@ -192,8 +192,8 @@ class UserController extends Controller
         }
 
         if($request->get('password')==NULL){
-            $password = $users->password;
-            $users->update([
+            $password = $user->password;
+            $user->update([
                 'name' => $name,
                 'email' => $email,
                 'password' => $password,
@@ -202,7 +202,7 @@ class UserController extends Controller
 
             $status = "Token is Valid";
 
-            return response()->json(compact(['users', 'status']));
+            return response()->json(compact(['user', 'status']));
         } else{
             $validator = Validator::make($request->all(), [
                 'password' => 'required|string|min:6'
@@ -215,7 +215,7 @@ class UserController extends Controller
             $password = $request->get('password');
         }
 
-        $users->update([
+        $user->update([
             'name' => $name,
             'email' => $email,
             'password' => Hash::make($password),
@@ -224,7 +224,7 @@ class UserController extends Controller
 
         $status = "Token is Valid";
 
-        return response()->json(compact(['users', 'status']));
+        return response()->json(compact(['user', 'status']));
 
     }
 
