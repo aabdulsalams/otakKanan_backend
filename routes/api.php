@@ -34,7 +34,7 @@ Route::group(['prefix' => 'gallery',  'middleware' => ['jwt.verify','role.check'
 });
 
 // Room Controller
-Route::group(['prefix' => 'room',  'middleware' => ['jwt.verify','user.check'] ], function() {
+Route::group(['prefix' => 'room' ], function() {
     Route::get('/read', [RoomController::class, 'index']);
     Route::get('/show/{id}', [RoomController::class, 'show']);
 });
