@@ -54,7 +54,7 @@ class RoomTypeController extends Controller
             }
 
             $file = $request->file('layout');
-            $layout = 'otakkanan/gallery/' . $user->name . '/' .time() . '.' . $file->getClientOriginalExtension();
+            $layout = 'otakkanan/gallery/' . $user->name . '/' . 'ly-' . time() . '.' . $file->getClientOriginalExtension();
             $file->storeAs('public/', $layout);
         }
 
@@ -155,7 +155,7 @@ class RoomTypeController extends Controller
             }
 
             $file = $request->file('layout');
-            $layout = 'otakkanan/gallery/' . $user->name .'/'  . time() . '.' . $file->getClientOriginalExtension();
+            $layout = 'otakkanan/gallery/' . $user->name .'/' . 'ly-'. time() . '.' . $file->getClientOriginalExtension();
             $file->storeAs('public/', $layout);
             Storage::delete('public/' . $roomType->layout);
 

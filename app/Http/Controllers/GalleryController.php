@@ -54,7 +54,7 @@ class GalleryController extends Controller
             }
 
             $file = $request->file('filename');
-            $filename = 'otakkanan/gallery/' . $user->name . '/' . time() . '.' . $file->getClientOriginalExtension();
+            $filename = 'otakkanan/gallery/' . $user->name . '/' . 'gl-' . time() . '.' . $file->getClientOriginalExtension();
             $file->storeAs('public/', $filename);
 
         }
@@ -120,7 +120,7 @@ class GalleryController extends Controller
             }
 
             $file = $request->file('filename');
-            $filename = 'otakkanan/gallery/' . $user->name .'/'  . time() . '.' . $file->getClientOriginalExtension();
+            $filename = 'otakkanan/gallery/' . $user->name .'/' . 'gl-' . time() . '.' . $file->getClientOriginalExtension();
             $file->storeAs('public/', $filename);
             Storage::delete('public/' . $currentGallery->filename);
 

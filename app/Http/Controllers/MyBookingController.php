@@ -8,7 +8,12 @@ use App\Models\Users;
 use App\Models\CategoryPrice;
 use App\Models\MyOffice;
 use JWTAuth;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class MyBookingController extends Controller
 {
@@ -128,7 +133,7 @@ class MyBookingController extends Controller
     }
 
     //user
-    public function store() 
+    public function store(Request $request) 
     {
 
         $user = JWTAuth::parseToken()->authenticate();
@@ -137,10 +142,8 @@ class MyBookingController extends Controller
             'room_id' => 'required|integer',
             'category_price_id' => 'required|integer',
             'starting_date' => 'required|date',
-            'starting_time' => 'required|time',
-            'quantity' => 'required|integer',
-            'total_price' => 'required|integer',
-            'status' => 'required|string'
+            'starting_time' => 'required',
+            'quantity' => 'required|integer'
         ]);
 
         if($validator->fails()){
@@ -156,6 +159,7 @@ class MyBookingController extends Controller
         $total_price = $category_price->price * $quantity;
 
         $my_booking = MyBooking::create([
+            'user_id' => $user->id,
             'room_id' => $request->get('room_id'),
             'category_price_id' => $category_price_id,
             'starting_date' => $request->get('starting_date'),
@@ -191,51 +195,56 @@ class MyBookingController extends Controller
     }
 
     //owner
-    public function changeStatus($id)
+    public function changeStatus(Request $request, $id)
     {
         $user = JWTAuth::parseToken()->authenticate();
 
         $my_booking_temp = DB::table('my_booking')
-        ->where('user_id', '=', $user->id)
         ->where('id', '=', $id)
         ->first();
 
-        $my_booking = MyBooking::find($my_booking_temp->id);
+        $my_office_temp = DB::table('my_office')
+        ->where('room_id', '=', $my_booking_temp->room_id)
+        ->where('user_id', '=', $user->id)
+        ->first();
 
-        if (empty($my_booking)) {
-            
+        if(empty($my_office_temp)) {
             return response()->json([ 'status' => "Data doesn't exist"]); 
+        } else {
+            $my_booking = MyBooking::find($my_booking_temp->id);
 
-        } 
+            if (empty($my_booking)) {
+                
+                return response()->json([ 'status' => "Data doesn't exist"]); 
 
-        $status = $request->get('status');
-        
-        if($status==NULL){
+            } 
 
-            $status = $my_booking->status;
+            $status = $request->get('status');
+            
+            if($status==NULL){
 
-        } else{
+                $status = $my_booking->status;
 
-            $validator = Validator::make($request->all(), [
-                'status' => 'required|string|max:255'
-            ]);
+            } else { 
 
-            if($validator->fails()){
-                return response()->json(['status' => $validator->errors()->toJson()], 400);
+                $validator = Validator::make($request->all(), [
+                    'status' => 'required|string|max:255'
+                ]);
+
+                if($validator->fails()){
+                    return response()->json(['status' => $validator->errors()->toJson()], 400);
+                }
+                
+                $my_booking->update([
+                    'status' => $status
+                ]);
+                
             }
-            if ($status = "declined"){
-                $status = "I'm Sorry, room already full";
-            } else if ($status = "approved") {
-                $status = "You can print the invoice, then show me on the office";
-            }
 
+            
+
+            return response()->json([ 'status' => "Update successfully"]);
         }
-
-        $my_booking->update([
-            'status' => $status
-        ]);
-
-        return response()->json([ 'status' => "Update successfully"]);
     }
 
     //owner

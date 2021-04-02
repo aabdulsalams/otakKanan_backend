@@ -204,7 +204,7 @@ class MyOfficeController extends Controller
             }
 
             $file = $request->file('filename');
-            $filename = 'otakkanan/gallery/' . $user->name . '/' . time() . '.' . $file->getClientOriginalExtension();
+            $filename = 'otakkanan/gallery/' . $user->name . '/' . 'rm-' . time() . '.' . $file->getClientOriginalExtension();
             $file->storeAs('public/', $filename);
 
         }
@@ -230,7 +230,7 @@ class MyOfficeController extends Controller
                 }
 
                 $file = $request->file('layout');
-                $layout = 'otakkanan/gallery/' . $user->name . '/' .time() . '.' . $file->getClientOriginalExtension();
+                $layout = 'otakkanan/gallery/' . $user->name . '/' . 'ly-' . time() . '.' . $file->getClientOriginalExtension();
                 $file->storeAs('public/', $layout);
             }
         
