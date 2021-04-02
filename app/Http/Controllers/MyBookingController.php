@@ -13,13 +13,13 @@ use Illuminate\Http\Request;
 class MyBookingController extends Controller
 {
     //user
-    public function bookingList() 
+    public function pendingList() 
     {
         $user = JWTAuth::parseToken()->authenticate();
 
         $bookingList1 = DB::table('my_booking')
         ->where('user_id', 'like', $user->id)
-        ->where('status', 'not like', 'finished')
+        ->where('status', 'like', 'pending')
         ->first();
 
         if (empty($bookingList1)) {
@@ -28,7 +28,7 @@ class MyBookingController extends Controller
 
         $bookingList = DB::table('my_booking')
         ->where('user_id', 'like', $user->id)
-        ->where('status', 'not like', 'finished')
+        ->where('status', 'like', 'pending')
         ->get();
 
         return response()->json(compact('bookingList')); 
@@ -36,13 +36,13 @@ class MyBookingController extends Controller
     }
 
     //user
-    public function finishedList() 
+    public function approvedList() 
     {
         $user = JWTAuth::parseToken()->authenticate();
 
         $historyBooking1 = DB::table('my_booking')
         ->where('user_id', 'like', $user->id)
-        ->where('status', 'like', 'finished')
+        ->where('status', 'like', 'approved')
         ->first();
 
         if (empty($historyBooking1)) {
@@ -51,11 +51,33 @@ class MyBookingController extends Controller
 
         $historyBooking = DB::table('my_booking')
         ->where('user_id', 'like', $user->id)
-        ->where('status', 'like', 'finished')
+        ->where('status', 'like', 'approved')
         ->get();
 
         return response()->json(compact('historyBooking')); 
     }
+
+     //user
+     public function declinedList() 
+     {
+         $user = JWTAuth::parseToken()->authenticate();
+ 
+         $historyBooking1 = DB::table('my_booking')
+         ->where('user_id', 'like', $user->id)
+         ->where('status', 'like', 'declined')
+         ->first();
+ 
+         if (empty($historyBooking1)) {
+             return response()->json([ 'status' => "Data Not Found"]); 
+         }
+ 
+         $historyBooking = DB::table('my_booking')
+         ->where('user_id', 'like', $user->id)
+         ->where('status', 'like', 'declined')
+         ->get();
+ 
+         return response()->json(compact('historyBooking')); 
+     }
 
     //user
     public function show($id)
