@@ -30,6 +30,16 @@ class RoomController extends Controller
         return response()->json(compact('rooms'));
     }
 
+    public function terUpdate() {
+
+        $rooms = DB::table('rooms')
+        ->orderBy('updated_at', 'desc')
+        ->take(4)
+        ->get();
+
+        return response()->json(compact('rooms'));
+    }
+
     
     public function show($id)
     {  
