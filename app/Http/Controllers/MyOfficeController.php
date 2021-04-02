@@ -175,7 +175,7 @@ class MyOfficeController extends Controller
             'latitude' => 'required',
             'longitude'=> 'required',
             'capacity' => 'required',
-            'layout' => 'required',
+            'layout' => 'required|image|mimes:png,jpeg,jpg',
             'room_type_name' => 'required',
             'room_function_name' => 'required',
             'filename' => 'required|image|mimes:png,jpeg,jpg',
@@ -192,10 +192,27 @@ class MyOfficeController extends Controller
         if($validator->fails()){
             return response()->json(['status' => $validator->errors()->toJson()], 400);
         }
+
+        if($request->hasFile('filename')) {
+            
+            $validator = Validator::make($request->all(), [
+                'filename' => 'required|image|mimes:png,jpeg,jpg'
+            ]);
+
+            if($validator->fails()){
+                return response()->json(['status' => $validator->errors()->toJson()], 400);
+            }
+
+            $file = $request->file('filename');
+            $filename = 'otakkanan/gallery/' . $user->name . '/' . time() . '.' . $file->getClientOriginalExtension();
+            $file->storeAs('public/', $filename);
+
+        }
         
             $room = Room::create([
                 'user_id' => $user->id,
                 'name' => $request->get('name'),
+                'filename' => $filename,
                 'address' => $request->get('address'),
                 'description' => $request->get('description'),
                 'latitude' => $request->get('latitude'),
@@ -231,21 +248,7 @@ class MyOfficeController extends Controller
                 'name' => $request->get('room_function_name')
             ]);
         
-            if($request->hasFile('filename')) {
             
-                $validator = Validator::make($request->all(), [
-                    'filename' => 'required|image|mimes:png,jpeg,jpg'
-                ]);
-    
-                if($validator->fails()){
-                    return response()->json(['status' => $validator->errors()->toJson()], 400);
-                }
-    
-                $file = $request->file('filename');
-                $filename = 'otakkanan/gallery/' . $user->name . '/' . time() . '.' . $file->getClientOriginalExtension();
-                $file->storeAs('public/', $filename);
-    
-            }
         
             $gallery = Gallery::create([
                 'room_id' => $room->id,

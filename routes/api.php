@@ -13,7 +13,7 @@ use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\OperationalTimesController;
 use App\Http\Controllers\CategoryPriceController;
 use App\Http\Controllers\MyOfficeController;
-
+use App\Http\Controllers\MyBookingController;
 
 // User Controller
 Route::group(['middleware' => 'jwt.verify'], function(){
@@ -36,6 +36,7 @@ Route::group(['prefix' => 'gallery',  'middleware' => ['jwt.verify','role.check'
 // Room Controller
 Route::group(['prefix' => 'room' ], function() {
     Route::get('/read', [RoomController::class, 'index']);
+    Route::get('/home', [RoomController::class, 'terUpdate']);
     Route::get('/show/{id}', [RoomController::class, 'show']);
 });
 
@@ -102,4 +103,20 @@ Route::group(['prefix' => 'my-office',  'middleware' =>  ['jwt.verify','role.che
     Route::get('/show/{id}', [MyOfficeController::class, 'show']);
     Route::post('/update/{id}', [MyOfficeController::class, 'update']);
     Route::delete('/delete/{id}', [MyOfficeController::class, 'destroy']);
+});
+
+// My Booking user Controller
+Route::group(['prefix' => 'my-booking',  'middleware' =>  ['jwt.verify','user.check'] ], function() {
+    Route::get('/user/approved', [MyBookingController::class, 'approvedList']);
+    Route::get('/user/pending', [MyBookingController::class, 'pendingList']);
+    Route::get('/user/declined', [MyBookingController::class, 'declinedList']);
+    Route::get('/user/invoice/{id}', [MyBookingController::class, 'show']);
+    Route::post('/user/create', [MyBookingController::class, 'store']);
+});
+
+// My Booking owner Controller
+Route::group(['prefix' => 'my-booking',  'middleware' =>  ['jwt.verify','role.check'] ], function() {
+    Route::get('/owner/booked-room', [MyBookingController::class, 'bookedRoom']);
+    Route::post('/owner/change-status/{id}', [MyBookingController::class, 'changeStatus']);
+    Route::delete('/owner/delete/{id}', [MyBookingController::class, 'destroy']);
 });
