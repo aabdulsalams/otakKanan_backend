@@ -59,10 +59,39 @@ class RoomController extends Controller
 
     public function terUpdate() {
 
-        $rooms = DB::table('rooms')
+        
+
+        $rooms_temp = DB::table('rooms')
         ->orderBy('updated_at', 'desc')
         ->take(4)
         ->get();
+
+        $rooms = array();
+
+        foreach ($rooms_temp as $key) {
+
+            $temp['id'] = $key->id;
+            $temp['name'] = $key->name;
+            $temp['description'] = $key->description;
+            $temp['address'] = $key->address;
+            $temp['latitude'] = $key->latitude;
+            $temp['longitude'] = $key->longitude;
+
+            $gallery = DB::table('galleries')
+            ->where('room_id', 'like', $key->id)
+            ->first();
+
+            if(empty($gallery)){
+                $filename = "not found";
+            } else {
+                $filename = $gallery->filename;
+            }
+
+            $temp['filename'] = $filename;
+
+            array_push($rooms, $temp);
+
+        }
 
         return response()->json(compact('rooms'));
     }
