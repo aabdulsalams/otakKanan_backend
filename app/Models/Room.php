@@ -15,7 +15,6 @@ class Room extends Model
         'name',
         'description',
         'address',
-        'filename',
         'latitude',
         'longitude'
     ];

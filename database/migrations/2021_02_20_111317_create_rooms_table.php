@@ -17,9 +17,8 @@ class CreateRoomsTable extends Migration
             $table->increments('id');
             $table->integer('user_id');
             $table->string('name');
-            $table->string('address');
-            $table->string('description');
-            $table->string('filename');
+            $table->text('address');
+            $table->text('description');
             //$table->string('how_to_access');
             $table->double('latitude');
             $table->double('longitude');

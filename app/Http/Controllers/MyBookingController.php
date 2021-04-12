@@ -154,6 +154,15 @@ class MyBookingController extends Controller
 
         $category_price_id = $request->get('category_price_id');
 
+        $check = DB::table('room_category_price')
+        ->where('room_id', '=', $request->get('room_id'))
+        ->where('category_price_id', '=', $category_price_id)
+        ->first();
+
+        if (empty($check)) {
+            return response()->json([ 'status' => "Data Not Found"]); 
+        }
+
         $category_price = CategoryPrice::find($category_price_id);
 
         $total_price = $category_price->price * $quantity;

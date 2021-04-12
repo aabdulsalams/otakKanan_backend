@@ -18,8 +18,8 @@ class OperationalTimes extends Migration
             $table->integer('room_id');
             $table->integer('user_id');
             $table->string('day');
-            $table->string('open_times');
-            $table->string('close_times');
+            $table->time('open_times');
+            $table->time('close_times');
             $table->timestamps();
         });
     }

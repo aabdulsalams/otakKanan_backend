@@ -18,7 +18,7 @@ class CreateRoomTypesTable extends Migration
             $table->integer('room_id');
             $table->integer('user_id');
             $table->string('name');
-            $table->string('capacity');
+            $table->integer('capacity');
             $table->string('layout');
             $table->timestamps();
         });
