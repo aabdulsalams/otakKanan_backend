@@ -25,17 +25,46 @@ class MyOfficeController extends Controller
 {
     public function index() {
         $user = JWTAuth::parseToken()->authenticate();
+
+        $my_office = array();
         
         $rooms = DB::table('my_office')
         ->where('user_id', 'like', $user->id)
-        ->get();
+        ->first();
 
-        $my_office = array();
-
+        if(empty($rooms)) {
+            return response()->json(compact('my_office')); 
+        } else {
+            $rooms = DB::table('my_office')
+            ->where('user_id', 'like', $user->id)
+            ->get();
+        }
+        
         foreach ($rooms as $key) {
-            $temp = Room::find($key->room_id);
+
+            $temp2 = Room::find($key->room_id);
+
+            $temp['id'] = $temp2->id;
+            $temp['name'] = $temp2->name;
+            $temp['description'] = $temp2->description;
+            $temp['address'] = $temp2->address;
+            $temp['latitude'] = $temp2->latitude;
+            $temp['longitude'] = $temp2->longitude;
+
+            $gallery = DB::table('galleries')
+            ->where('room_id', 'like', $temp2->id)
+            ->first();
+
+            if(empty($gallery)){
+                $filename = "not found";
+            } else {
+                $filename = $gallery->filename;
+            }
+
+            $temp['filename'] = $filename;
 
             array_push($my_office, $temp);
+
         }
 
         return response()->json(compact('my_office')); 
@@ -83,18 +112,27 @@ class MyOfficeController extends Controller
         ->where('room_id', 'like', $room->id)
         ->get();
 
+        
         $category_price_temp = array();
         foreach ($room_category_price as $key) {
-            $user_id_temp = $key->user_id;
+            
             $category_price = DB::table('category_price')
             ->where('id', 'like', $key->category_price_id)
             ->first();
             array_push($category_price_temp, $category_price);
         }
+
         
-        $user = DB::table('users')
-        ->where('id', 'like', $user_id_temp)
+        
+        $my_office = DB::table('my_office')
+        ->where('room_id', 'like', $id)
         ->first();
+
+        $user = Users::find($my_office->user_id);
+
+        if (empty($user)) {
+            return response()->json([ 'status' => "Data Not Found"]); 
+        }
 
         $detail_room['id'] = $room->id;
         $detail_room['name'] = $room->name;
@@ -164,6 +202,36 @@ class MyOfficeController extends Controller
 
     }
 
+    public function coba(Request $request) {
+
+        
+        $tes = $request->file('filename.*');
+        $temp = array();
+
+        if($request->hasFile('filename.*')) {
+            $validator = Validator::make($request->all(), [
+                'filename' => 'required|image|mimes:png,jpeg,jpg'
+            ]);
+
+            if($validator->fails()){
+                return response()->json(['status' => $validator->errors()->toJson()], 400);
+            }
+
+            $file = $request->file('filename.*');
+            return response()->json(compact('file'));
+        }
+
+        // foreach ($tes as $key){
+        //     array_push($temp, $key.getClientOriginalName());
+        // }
+
+        
+        return response()->json(compact('tes'));
+
+        
+
+    }
+
     public function store(Request $request)
     {
         $user = JWTAuth::parseToken()->authenticate();
@@ -177,42 +245,25 @@ class MyOfficeController extends Controller
             'capacity' => 'required',
             'layout' => 'required|image|mimes:png,jpeg,jpg',
             'room_type_name' => 'required',
-            'room_function_name' => 'required',
-            'filename' => 'required|image|mimes:png,jpeg,jpg',
-            'facility_name' => 'required|max:255',
-            'facility_status' => 'required|max:255',
-            'regulation_name' => 'required|max:255',
-            'day' => 'required',
-            'open_times' => 'required',
-            'close_times' => 'required',
-            'category_price_name' => 'required',
-            'price' => 'required'
+            'room_function_name.*' => 'required',
+            'filename.*' => 'required|image|mimes:png,jpeg,jpg',
+            'facility_name.*' => 'required|max:255',
+            'facility_status.*' => 'required|max:255',
+            'regulation_name.*' => 'required|max:255',
+            'day.*' => 'required',
+            'open_times.*' => 'required',
+            'close_times.*' => 'required',
+            'category_price_name.*' => 'required',
+            'price.*' => 'required'
         ]);
 
         if($validator->fails()){
             return response()->json(['status' => $validator->errors()->toJson()], 400);
         }
-
-        if($request->hasFile('filename')) {
-            
-            $validator = Validator::make($request->all(), [
-                'filename' => 'required|image|mimes:png,jpeg,jpg'
-            ]);
-
-            if($validator->fails()){
-                return response()->json(['status' => $validator->errors()->toJson()], 400);
-            }
-
-            $file = $request->file('filename');
-            $filename = 'otakkanan/gallery/' . $user->name . '/' . 'rm-' . time() . '.' . $file->getClientOriginalExtension();
-            $file->storeAs('public/', $filename);
-
-        }
         
             $room = Room::create([
                 'user_id' => $user->id,
                 'name' => $request->get('name'),
-                'filename' => $filename,
                 'address' => $request->get('address'),
                 'description' => $request->get('description'),
                 'latitude' => $request->get('latitude'),
@@ -241,53 +292,136 @@ class MyOfficeController extends Controller
                 'capacity' => $request->get('capacity'),
                 'layout' => $layout
             ]);
+
+            $room_function_name = $request->input('room_function_name.*');
+
+            $roomFunction = array();
+
+            foreach ($room_function_name as $key) {
+
+                $roomFunction_temp = RoomFunction::create([
+                    'room_id' => $room->id,
+                    'user_id' => $user->id,
+                    'name' => $key
+                ]);
+
+                array_push($roomFunction, $roomFunction_temp);
+            }
+
+            $gallery = array();
         
-            $roomFunction = RoomFunction::create([
-                'room_id' => $room->id,
-                'user_id' => $user->id,
-                'name' => $request->get('room_function_name')
-            ]);
+            if($request->hasFile('filename.*')) {
+            
+                $validator = Validator::make($request->all(), [
+                    'filename.*' => 'required|image|mimes:png,jpeg,jpg'
+                ]);
+    
+                if($validator->fails()){
+                    return response()->json(['status' => $validator->errors()->toJson()], 400);
+                }
+            
+
+                $file = $request->file('filename.*');
+                $index = $user->id;
+
+                foreach ($file as $key) {
+                        
+                    $filename = 'otakkanan/gallery/' . $user->name . '/' . 'rm-' . $index . time() . '.' . $key->getClientOriginalExtension();
+                    $key->storeAs('public/', $filename);
+
+                    $gallery_temp = Gallery::create([
+                        'room_id' => $room->id,
+                        'user_id' => $user->id,
+                        'filename' => $filename
+                    ]);
+
+                    array_push($gallery, $gallery_temp);
+
+                    $index++;
+        
+                }
+
+            }
+        
+           
+
+            $facility_name = $request->input('facility_name.*');
+            $facility_status = $request->input('facility_status.*');
+
+            $facility = array();
+
+            for($i = 0; $i < count($facility_name); $i++){
+                $facility_temp = Facility::create([
+                    'room_id' => $room->id,
+                    'user_id' => $user->id,
+                    'name' => $facility_name[$i],
+                    'status' => $facility_status[$i]
+                ]);
+
+                array_push($facility, $facility_temp);
+            }
+        
+            $regulation_name = $request->input('regulation_name.*');
+            $common_regulations = array();
+
+            foreach ($regulation_name as $key) {
+                $common_regulations_temp = CommonRegulations::create([
+                    'room_id' => $room->id,
+                    'user_id' => $user->id,
+                    'name' => $key
+                ]);
+
+                array_push($common_regulations, $common_regulations_temp);
+            }
+        
+            $day = $request->input('day.*');
+            $open_times = $request->input('open_times.*');
+            $close_times = $request->input('close_times.*');
+
+            $operational_times = array();
+
+            for($i = 0; $i < count($day); $i++){
+                $operational_times_temp = OperationalTimes::create([
+                    'room_id' => $room->id,
+                    'user_id' => $user->id,
+                    'day' => $day[$i],
+                    'open_times' => $open_times[$i],
+                    'close_times' => $close_times[$i]
+                ]);
+
+                array_push($operational_times, $operational_times_temp);
+            }
+       
+           
+        
+            $category_price = array();
+
+            $category_price_name = $request->input('category_price_name.*');
+            $price = $request->input('price.*');
+
+            for($i = 0; $i < count($category_price_name); $i++){
+                $category_price_temp = CategoryPrice::create([
+                    'user_id' => $user->id,
+                    'name' => $category_price_name[$i],
+                    'price' => $price[$i]
+                ]);
+
+                array_push($category_price, $category_price_temp);
+
+            }
+
+            $room_category_price = array();
+        
+            foreach ($category_price as $key) {
+                $room_category_price_temp = RoomCategoryPrice::create([
+                    'room_id' => $room->id,
+                    'user_id' => $user->id,
+                    'category_price_id' => $key->id
+                ]);
+                array_push($room_category_price, $room_category_price_temp);
+            }
         
             
-        
-            $gallery = Gallery::create([
-                'room_id' => $room->id,
-                'user_id' => $user->id,
-                'filename' => $filename
-            ]);
-        
-            $facility = Facility::create([
-                'room_id' => $room->id,
-                'user_id' => $user->id,
-                'name' => $request->get('facility_name'),
-                'status' => $request->get('facility_status')
-            ]);
-        
-            $common_regulations = CommonRegulations::create([
-                'room_id' => $room->id,
-                'user_id' => $user->id,
-                'name' => $request->get('regulation_name')
-            ]);
-       
-            $operational_times = OperationalTimes::create([
-                'room_id' => $room->id,
-                'user_id' => $user->id,
-                'day' => $request->get('day'),
-                'open_times' => $request->get('open_times'),
-                'close_times' => $request->get('close_times')
-            ]);
-        
-            $category_price = CategoryPrice::create([
-                'user_id' => $user->id,
-                'name' => $request->get('category_price_name'),
-                'price' => $request->get('price')
-            ]);
-        
-            $room_category_price = RoomCategoryPrice::create([
-                'room_id' => $room->id,
-                'user_id' => $user->id,
-                'category_price_id' => $category_price->id
-            ]);
         
             $my_office = MyOffice::create([
                 'room_id' => $room->id,

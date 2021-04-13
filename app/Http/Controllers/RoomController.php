@@ -25,17 +25,73 @@ class RoomController extends Controller
     
     public function index()
     {
-        $rooms = Room::all();
+        $rooms_temp = Room::all();
+
+        $rooms = array();
+        
+        foreach ($rooms_temp as $key) {
+
+            $temp['id'] = $key->id;
+            $temp['name'] = $key->name;
+            $temp['description'] = $key->description;
+            $temp['address'] = $key->address;
+            $temp['latitude'] = $key->latitude;
+            $temp['longitude'] = $key->longitude;
+
+            $gallery = DB::table('galleries')
+            ->where('room_id', 'like', $key->id)
+            ->first();
+
+            if(empty($gallery)){
+                $filename = "not found";
+            } else {
+                $filename = $gallery->filename;
+            }
+
+            $temp['filename'] = $filename;
+
+            array_push($rooms, $temp);
+
+        }
 
         return response()->json(compact('rooms'));
     }
 
     public function terUpdate() {
 
-        $rooms = DB::table('rooms')
+        
+
+        $rooms_temp = DB::table('rooms')
         ->orderBy('updated_at', 'desc')
         ->take(4)
         ->get();
+
+        $rooms = array();
+
+        foreach ($rooms_temp as $key) {
+
+            $temp['id'] = $key->id;
+            $temp['name'] = $key->name;
+            $temp['description'] = $key->description;
+            $temp['address'] = $key->address;
+            $temp['latitude'] = $key->latitude;
+            $temp['longitude'] = $key->longitude;
+
+            $gallery = DB::table('galleries')
+            ->where('room_id', 'like', $key->id)
+            ->first();
+
+            if(empty($gallery)){
+                $filename = "not found";
+            } else {
+                $filename = $gallery->filename;
+            }
+
+            $temp['filename'] = $filename;
+
+            array_push($rooms, $temp);
+
+        }
 
         return response()->json(compact('rooms'));
     }
@@ -79,16 +135,22 @@ class RoomController extends Controller
 
         $category_price_temp = array();
         foreach ($room_category_price as $key) {
-            $user_id_temp = $key->user_id;
+            
             $category_price = DB::table('category_price')
             ->where('id', 'like', $key->category_price_id)
             ->first();
             array_push($category_price_temp, $category_price);
         }
         
-        $user = DB::table('users')
-        ->where('id', 'like', $user_id_temp)
+        $my_office = DB::table('my_office')
+        ->where('room_id', 'like', $id)
         ->first();
+
+        $user = Users::find($my_office->user_id);
+
+        if (empty($user)) {
+            return response()->json([ 'status' => "Data Not Found"]); 
+        }
 
         $detail_room['id'] = $room->id;
         $detail_room['name'] = $room->name;

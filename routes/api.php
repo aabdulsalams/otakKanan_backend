@@ -22,6 +22,8 @@ Route::group(['middleware' => 'jwt.verify'], function(){
     Route::post('/editProfile', [UserController::class, 'update']);
 });
 
+Route::post('/coba', [MyOfficeController::class, 'coba']);
+
 Route::post('register', [UserController::class, 'register']);
 Route::post('login', [UserController::class, 'login']);
 
